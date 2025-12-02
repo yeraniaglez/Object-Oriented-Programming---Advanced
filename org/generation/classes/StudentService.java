@@ -3,14 +3,16 @@ package org.generation.classes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.generation.exceptions.CourseNotFoundException;
+import org.generation.exceptions.StudentNotFoundException;
 
 public class StudentService
 {
-    HashMap<String, Course> courseList = new HashMap<>();
+    private HashMap<String, Course> courseList = new HashMap<>();
 
-    HashMap<String, Student> students = new HashMap<>();
+    private HashMap<String, Student> students = new HashMap<>();
 
-    HashMap<String, List<Course>> coursesEnrolledByStudents = new HashMap<>();
+    private HashMap<String, List<Course>> coursesEnrolledByStudents = new HashMap<>();
 
 
     public StudentService()
@@ -21,33 +23,61 @@ public class StudentService
         courseList.put( "History", new Course( "History", 10, "Sima Qian" ) );
         courseList.put( "Biology", new Course( "Biology", 10, "Charles Darwin" ) );
     }
+    
+    public void addStudent(Student student) {
+        students.put(student.getId(), student);
+    }
 
-    public void enrollStudents( String courseName, String studentID )
-    {
-        Course course = courseList.get( courseName );
+    public void enrollStudents(String courseName, String studentID)
+            throws CourseNotFoundException, StudentNotFoundException {
 
-        if ( !coursesEnrolledByStudents.containsKey( studentID ) )
-        {
-            coursesEnrolledByStudents.put( studentID, new ArrayList<>() );
+        if (!courseList.containsKey(courseName)) {
+            throw new CourseNotFoundException();
         }
-        coursesEnrolledByStudents.get( studentID ).add( course );
+
+        if (!students.containsKey(studentID)) {
+            throw new StudentNotFoundException();
+        }
+
+        Course course = courseList.get(courseName);
+
+        coursesEnrolledByStudents
+                .computeIfAbsent(studentID, k -> new ArrayList<>())
+                .add(course);
     }
+    
+    public void unEnrollStudents(String courseName, String studentID)
+            throws CourseNotFoundException, StudentNotFoundException {
 
-    public void unEnrollStudents( String courseName, String studentID )
-    {
-        Course course = courseList.get( courseName );
+        if (!courseList.containsKey(courseName)) {
+            throw new CourseNotFoundException();
+        }
 
-        if ( coursesEnrolledByStudents.containsKey( studentID ) )
-        {
-            coursesEnrolledByStudents.get( studentID ).remove( course );
+        if (!students.containsKey(studentID)) {
+            throw new StudentNotFoundException();
+        }
+
+        if (coursesEnrolledByStudents.containsKey(studentID)) {
+            Course course = courseList.get(courseName);
+            coursesEnrolledByStudents.get(studentID).remove(course);
+        }
+    }
+    
+    public void showAllCourses() {
+        for (Course course : courseList.values()) {
+            System.out.println(course.getName() + " - Profesor: " + course.getProfessorName());
         }
     }
 
-    public void showEnrolledStudents(String courseId){
-        //TODO implement using collections loops
-    }
+    public void showEnrolledStudents(String studentId) {
 
-    public void showAllCourses(){
-        //TODO implement using collections loops
+        if (!coursesEnrolledByStudents.containsKey(studentId)) {
+            System.out.println("No hay cursos inscritos para este estudiante");
+            return;
+        }
+
+        for (Course course : coursesEnrolledByStudents.get(studentId)) {
+            System.out.println(course.getName());
+        }
     }
 }
